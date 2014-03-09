@@ -1,4 +1,3 @@
-
 #' Baixa PDF do Justica Aberta e transforma em data.frame
 #' 
 #' Essa funcao so funciona no linux, e somente se vc instalar o pdfminer (sudo pip install pdfminer==20110515).
@@ -8,26 +7,34 @@
 #' e extremamente lenta (demora ~1s por produtividade, e geralmente queremos muitas produtividades).
 #' 
 #' @export
-crawler_prod_ja <- function(cod_prod, cod_vara, tipo='vara', d_pdf, d_html, pdf2txt=TRUE) {
+crawler_prod_ja <- function(cod_prod, cod_vara, tipo='vara', d_pdf, d_html=d_pdf, pdf2txt=TRUE) {
+  df <- mdply(cbind(cod_prod, cod_vara), crawler_prod_ja_one, tipo, d_pdf, d_html, pdf2txt)
+  return(df)
+}
+# la <- crawler_prod_ja(c(838677,869321,522777), 8284, 'vara', "~/mestrado/projeto_mestrado/testes/")
+# df <- crawler_prod_ja(head(df_mag$cod_prod), 877, 'mag', '~/mestrado/projeto_mestrado/testes/')
+crawler_prod_ja_one <- function(cod_prod, cod_vara, tipo, d_pdf, d_html, pdf2txt) {
   pdf_file <- download_pdf_ja(cod_prod, cod_vara, tipo, d_pdf)
   if(pdf2txt) html_file <- pdf_to_html(pdf_file, d_html)
   dados <- pega_dados(html_file)
+  dados$key2 <- gsub(' +', '_', str_trim(gsub('\\(|\\)|\n|\\/','', rm_accent(tolower(dados$key)))))
   metadados <- pega_metadados(html_file)
-  return(rbind.fill(list(dados, metadados)))
+  dados_melt <- rbind.fill(list(dados, metadados))
+  dados_melt$cod_prod <- cod_prod
+  dados_melt$cod_vara <- cod_vara
+  dados_melt$key2 <- gsub(' +', '_', str_trim(gsub('\\(|\\)|\n|\\/','', rm_accent(tolower(dados_melt$key)))))
+  dados_cast <- dcast(dados_melt, cod_prod + cod_vara ~ key2)
+  for(x in dados$key2) dados_cast[[x]] <- as.numeric(dados_cast[[x]])
+  return(dados_cast)
 }
-
-tidy_prod_ja <- function(dados, metadados) {
-  print('under construction')
-}
-
 download_pdf_ja <- function(cod_prod, cod_vara, tipo, d_pdf) {
   if(tipo == 'vara') {
     post_data <- list(d='relatorios', a='relatorios', f='respostaProdutividadeServentiaPdf', 
                       SEQ_PRODUTIVIDADE_SERVENTIA=cod_prod, SEQ_SERVENTIA_JUDICIAL=cod_vara,
                       security_token='', url='http://www.cnj.jus.br/corregedoria/justica_aberta/')
   } else if(tipo == 'mag') {
-    post_data <- list(d='relatorios', a='relatorios', f='respostaProdutividadeServentiaPdf', 
-                      SEQ_PRODUTIVIDADE_SERVENTIA=cod_prod, SEQ_SERVENTIA_JUDICIAL=cod_vara,
+    post_data <- list(d='relatorios', a='relatorios', f='respostaProdutividadeMagistradoPdf', 
+                      SEQ_PRODUTIVIDADE_MAGISTRADO=cod_prod, SEQ_SERVENTIA_JUDICIAL=cod_vara,
                       security_token='')    
   } else {
     cat(paste0('Este tipo nao e valido: ',tipo,'\n'))
@@ -38,9 +45,8 @@ download_pdf_ja <- function(cod_prod, cod_vara, tipo, d_pdf) {
   writeBin(content(r, 'raw'), pdf_file)
   return(pdf_file)
 }
-
 pdf_to_html <- function(pdf_file, d_html) {
-  if(file.exists(pdf)) {
+  if(file.exists(pdf_file)) {
     html_file <- paste0(d_html, str_replace(str_extract(pdf_file, '[^/]*$'), 'pdf', 'html'))
     pdf2txt <- sprintf("pdf2txt -t html %s > %s", pdf_file, html_file)
     system(pdf2txt)
@@ -50,7 +56,6 @@ pdf_to_html <- function(pdf_file, d_html) {
     return()
   }
 }
-
 prod_nums <- function(elem) {
   style <- xmlGetAttr(elem,'style')
   left <- as.numeric(str_split_fixed(str_split_fixed(style,'left:',2)[2],'px;',2)[1])
@@ -72,21 +77,20 @@ pega_dados <- function(ar) {
   if(length(prods_num) > 0) {
     nodes2 <- getNodeSet(html, search2)  
     prods_txt <- str_trim(unlist(str_split(paste0(sapply(nodes2, xmlValue),collapse=''),':')))
-    prods_txt <- gsub('Total|QUESTIONÁRIO DE PRODUTIVIDADE DA SERVENTIA\n','',prods_txt)
+    prods_txt <- gsub('Total|QUESTIONÁRIO DE PRODUTIVIDADE DA SERVENTIA\n|QUESTIONÁRIO DE PRODUTIVIDADE DO MAGISTRADO\n?','',prods_txt)
     prods_txt <- prods_txt[prods_txt %in% sapply(prods_txt,toupper)]
     prods_txt <- prods_txt[!prods_txt %in% '']
     if(length(prods_txt) != length(prods_num)) {
       write(ar,paste0('/home2/Projeto_JA/others/bug/',str_sub(ar,str_locate(ar,'/[0-9]+')[1]+1)))
       return(data.frame())
     } else {
-      df <- data.frame(arq=ar, key=prods_txt,value=prods_num, tipo='produtividade',stringsAsFactors=F)
+      df <- data.frame(arq=ar, key=prods_txt, value=prods_num, tipo='produtividade', stringsAsFactors=F)
       return(df)
     }  
   } else {
     return(data.frame())
   }
 }
-
 parse_metadados <- function(linha) {
   if(str_detect(linha,':')) {
     d<-str_trim(str_split_fixed(linha,':',2))
@@ -108,5 +112,4 @@ pega_metadados <- function(arq) {
   df$arq <- arq
   return(df)
 }
-
 #___________________________________________________________________________________________________
