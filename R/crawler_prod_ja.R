@@ -11,8 +11,6 @@ crawler_prod_ja <- function(cod_prod, cod_vara, tipo='vara', d_pdf, d_html=d_pdf
   df <- mdply(cbind(cod_prod, cod_vara), crawler_prod_ja_one, tipo, d_pdf, d_html, pdf2txt)
   return(df)
 }
-# la <- crawler_prod_ja(c(838677,869321,522777), 8284, 'vara', "~/mestrado/projeto_mestrado/testes/")
-# df <- crawler_prod_ja(head(df_mag$cod_prod), 877, 'mag', '~/mestrado/projeto_mestrado/testes/')
 crawler_prod_ja_one <- function(cod_prod, cod_vara, tipo, d_pdf, d_html, pdf2txt) {
   pdf_file <- download_pdf_ja(cod_prod, cod_vara, tipo, d_pdf)
   if(pdf2txt) html_file <- pdf_to_html(pdf_file, d_html)
