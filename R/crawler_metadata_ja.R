@@ -135,7 +135,8 @@ meta_vara <- function(muni, justica) {
   validos <- sapply(lista, length) > 0
   lista <- lista[validos]
   muni <- muni[validos]
-  df <- ldply(1:length(lista), function(x) monta(lista[[x]], muni[x]))
+  if(length(lista) == 0) return(NULL)
+  df <- ldply(1:length(lista), function(x) monta(lista[[x]], muni[x]))  
   if(nrow(df) > 0) {
     names(df) <- c('nome_vara', 'nome_muni', 'nome_uf','tipo_justica', 'cod_vara', 'cod_muni')  
     return(df)
@@ -153,7 +154,6 @@ meta_prod <- function(varas) {
   df_vara <- ldply(1:length(lista), function(x) monta_vara(lista[[x]][[1]], varas[x]))  
   df_mag <- ldply(1:length(lista), function(x) monta_mag(lista[[x]][[2]], varas[x]))  
   df_info <- ldply(1:length(lista), function(x) monta_info(lista[[x]][[3]], varas[x]))  
-  
   if(nrow(df_vara)>0) {
     names(df_vara) <- c('nome_vara', 'nome_uf', 'periodo', 'data_inicio', 'data_fim', 'cod_prod', 'cod_vara')
   } else {
