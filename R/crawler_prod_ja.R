@@ -7,12 +7,13 @@
 #' e extremamente lenta (demora ~1s por produtividade, e geralmente queremos muitas produtividades).
 #' 
 #' @export
-crawler_prod_ja <- function(cod_prod, cod_vara, tipo='vara', d_pdf, d_html=d_pdf, pdf2txt=TRUE) {
+crawler_prod_ja <- function(cod_prod, cod_vara, tipo='vara', d_pdf=getwd(), d_html=d_pdf, pdf2txt=TRUE) {
   df <- mdply(cbind(cod_prod, cod_vara), crawler_prod_ja_one, tipo, d_pdf, d_html, pdf2txt)
   return(df)
 }
 crawler_prod_ja_one <- function(cod_prod, cod_vara, tipo, d_pdf, d_html, pdf2txt) {
-  pdf_file <- download_pdf_ja(cod_prod, cod_vara, tipo, d_pdf)
+  url <- 'http://www.cnj.jus.br/corregedoria/justica_aberta/?s'
+  pdf_file <- download_pdf_ja(url, cod_prod, cod_vara, tipo, d_pdf)
   if(pdf2txt) html_file <- pdf_to_html(pdf_file, d_html)
   dados <- pega_dados(html_file)
   dados$key2 <- gsub(' +', '_', str_trim(gsub('\\(|\\)|\n|\\/','', rm_accent(tolower(dados$key)))))
@@ -25,7 +26,7 @@ crawler_prod_ja_one <- function(cod_prod, cod_vara, tipo, d_pdf, d_html, pdf2txt
   for(x in dados$key2) dados_cast[[x]] <- as.numeric(dados_cast[[x]])
   return(dados_cast)
 }
-download_pdf_ja <- function(cod_prod, cod_vara, tipo, d_pdf) {
+download_pdf_ja <- function(url, cod_prod, cod_vara, tipo, d_pdf) {
   if(tipo == 'vara') {
     post_data <- list(d='relatorios', a='relatorios', f='respostaProdutividadeServentiaPdf', 
                       SEQ_PRODUTIVIDADE_SERVENTIA=cod_prod, SEQ_SERVENTIA_JUDICIAL=cod_vara,
