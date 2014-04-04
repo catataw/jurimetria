@@ -52,7 +52,6 @@ crawler_cjpg <- function(livre='', classes='', assuntos='', magistrados='', data
     return(df)  
   },TRUE)
   cat('BUGOU!!!!!\n')
-  bug <<- append(bug, pag)
   return(data.frame())
 }
 
@@ -63,7 +62,6 @@ parse_node_meta <- function(node) {
   names(df) <- val[1,1]
   df
 }
-
 parse_node <- function(node) {
   children <- xmlChildren(node)
   df <- do.call(cbind, lapply(children[2:(length(children)-1)], parse_node_meta))
