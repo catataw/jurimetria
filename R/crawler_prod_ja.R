@@ -23,7 +23,8 @@ crawler_prod_ja_one <- function(cod_prod, cod_vara, tipo, d_pdf, d_html, pdf2txt
   dados_melt$cod_prod <- cod_prod
   dados_melt$cod_vara <- cod_vara
   dados_melt$key2 <- gsub(' +', '_', str_trim(gsub('\\(|\\)|\n|\\/','', rm_accent(tolower(dados_melt$key)))))
-  dados_cast <- dcast(dados_melt, cod_prod + cod_vara ~ key2, fun.aggregate=mean)
+  pr <- function(x) return(x[1])
+  dados_cast <- dcast(dados_melt, cod_prod + cod_vara ~ key2, fun.aggregate=pr)
   for(x in dados$key2) dados_cast[[x]] <- as.numeric(dados_cast[[x]])
   return(dados_cast)
 }
