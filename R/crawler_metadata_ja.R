@@ -147,7 +147,7 @@ meta_prod <- function(varas) {
   monta_vara <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_vara), cod_vara=cod_vara))
   monta_mag <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_mag), cod_vara=cod_vara))
   monta_info <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_info), cod_vara=cod_vara))
-  lista <- lapply(varas, crawler_prod)
+  lista <- llply(varas, crawler_prod, .progress='text')
   validos <- sapply(lista, length) > 0
   lista <- lista[validos]
   varas <- varas[validos]

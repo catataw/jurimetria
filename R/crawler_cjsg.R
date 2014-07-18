@@ -16,13 +16,12 @@ crawler_cjsg <- function(pag=0, livre='', ementa='', n_recurso='', n_registro=''
                     'assuntosTreeSelection.values'='',
                     'assuntosTreeSelection.text'='',
                     'comarcaSelectedEntitiesList'='',
-                    'contadorcomarca'='',
-                    'contadorMaiorcomarca'='1',
+                    'contadorcomarca'='0',
+                    'contadorMaiorcomarca'='0',
                     'comarcaPK.cdComarca'=comarca,
-                    'dados.comarcas[0].comarcaPK.cdComarca'='583',
                     'nmComarca'='',
-                    'secoesTreeSelection.values'='',
-                    'secoesTreeSelection.text'='',
+                    'secoesTreeSelection.values'=orgao_julgador,
+                    'secoesTreeSelection.text'='5 Registros selecionados',
                     'dados.dtJulgamentoInicio'='',
                     'dados.dtJulgamentoFim'='',
                     'dados.dtRegistroInicio'='',
@@ -40,6 +39,7 @@ crawler_cjsg <- function(pag=0, livre='', ementa='', n_recurso='', n_registro=''
   r_pag <- GET(url_pag, config=c(ssl.verifypeer=F, set_cookies(unlist(r$cookies))))
   cat('download realizado! ')
   cat('inicializando parser...')
+  
   try ({
     html <- htmlParse(content(r_pag, 'text'), encoding='UTF-8')
     nodes <- getNodeSet(html, "//tr[@class='fundocinza1']//table")  
@@ -47,6 +47,7 @@ crawler_cjsg <- function(pag=0, livre='', ementa='', n_recurso='', n_registro=''
     df <- ldply(nodes, parse_node)
     df$pag <- pag
     cat('OK!\n')
+    Sys.sleep(2)
     return(df)  
   },TRUE)
   cat('BUGOU!!!!!\n')
@@ -65,11 +66,8 @@ parse_node <- function(node) {
   children <- xmlChildren(node)
   df <- do.call(cbind, lapply(children[2:(length(children)-1)], parse_node_meta))
   df$n_processo <- gsub('[\n\r\t ]', '', xmlValue(xmlChildren(xmlChildren(children[[1]])$td)$a))
+  df$tipo <- str_trim(gsub(' ', ' ', gsub('[\n\r\t]', '', xmlValue(xmlChildren(xmlChildren(children[[1]])$td)$span))))
   df$cod_sentenca <- xmlGetAttr(xmlChildren(xmlChildren(children[[1]])$td)$a,'name')
   df$txt <-  gsub('[\r\t]', '', xmlValue(children[[length(children)]]))
   df
 }
-
-# dados <- crawler_cjsg(pag=2, comarca='583')
-
-
