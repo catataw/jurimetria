@@ -147,13 +147,17 @@ meta_prod <- function(varas) {
   monta_vara <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_vara), cod_vara=cod_vara))
   monta_mag <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_mag), cod_vara=cod_vara))
   monta_info <- function(nodes, cod_vara) return(mutate(ldply(nodes, scraper_prod_info), cod_vara=cod_vara))
+  cat('download...\n')
   lista <- llply(varas, crawler_prod, .progress='text')
   validos <- sapply(lista, length) > 0
   lista <- lista[validos]
   varas <- varas[validos]
-  df_vara <- ldply(1:length(lista), function(x) monta_vara(lista[[x]][[1]], varas[x]))  
-  df_mag <- ldply(1:length(lista), function(x) monta_mag(lista[[x]][[2]], varas[x]))  
-  df_info <- ldply(1:length(lista), function(x) monta_info(lista[[x]][[3]], varas[x]))  
+  cat('varas...\n')
+  df_vara <- ldply(1:length(lista), function(x) monta_vara(lista[[x]][[1]], varas[x]), .progress='text')  
+  cat('magistrados...\n')
+  df_mag <- ldply(1:length(lista), function(x) monta_mag(lista[[x]][[2]], varas[x]), .progress='text')
+  cat('infos...\n')
+  df_info <- ldply(1:length(lista), function(x) monta_info(lista[[x]][[3]], varas[x]), .progress='text')  
   if(nrow(df_vara)>0) {
     names(df_vara) <- c('nome_vara', 'nome_uf', 'periodo', 'data_inicio', 'data_fim', 'cod_prod', 'cod_vara')
   } else {
