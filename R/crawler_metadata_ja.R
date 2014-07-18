@@ -166,3 +166,4 @@ meta_prod <- function(varas) {
   }
   list(df_vara, df_mag, df_info)
 }
+
