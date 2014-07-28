@@ -25,7 +25,7 @@ crawler_cjpg <- function(pag=0, r=NULL, ementa=TRUE, opts=NULL) {
       agenteSelectedEntitiesList = '',
       contadoragente = '0',
       contadorMaioragente = '0',
-      cdAgente = magistrados,
+      cdAgente = opts[['magistrados']],
       nmAgente = '',
       varasTreeSelection.text = '',
       dadosConsulta.ordenacao = 'DESC'
@@ -33,6 +33,7 @@ crawler_cjpg <- function(pag=0, r=NULL, ementa=TRUE, opts=NULL) {
     urlb <- list(scheme='https', hostname='esaj.tjsp.jus.br', path='cjpg/pesquisar.do', query=query)
     class(urlb) <- 'url'
     url <- build_url(urlb)
+    url <- gsub('NULL', '', url)
     r <- GET(url, config=list(ssl.verifypeer=F))
   }
   
